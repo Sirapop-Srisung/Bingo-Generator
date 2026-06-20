@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Card Generator</title>
+    <meta name="description" content="Generate custom printable Bingo cards with custom banners, images, and layouts.">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+        :root {
+            --image-fit: cover;
+            --image-padding: 0px;
+        }
+
+        @page {
+            size: 8.5in 11in;
+            margin: 0mm;
+        }
+
+        body {
+            font-family: 'Outfit', Arial, sans-serif;
+            background: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            color: #1e293b;
+        }
+
+        .controls {
+            max-width: 950px;
+            margin: 0 auto 25px;
+            background: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        button,
+        select,
+        input,
+        label {
+            font-family: inherit;
+        }
+
+        button {
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.btn-primary {
+            background: #4f46e5;
+            color: #fff;
+            border: none;
+        }
+
+        button.btn-primary:hover {
+            background: #4338ca;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+
+        button.btn-danger {
+            background: #fff;
+            color: #ef4444;
+            border-color: #fca5a5;
+        }
+
+        button.btn-danger:hover {
+            background: #fef2f2;
+            border-color: #ef4444;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+        }
+
+        button.btn-success {
+            background: #10b981;
+            color: #fff;
+            border: none;
+        }
+
+        button.btn-success:hover {
+            background: #059669;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        select {
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            color: #475569;
+        }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #4f46e5;
+            cursor: pointer;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .slider-container label {
+            color: #475569;
+        }
+
+        .slider-container input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 120px;
+            height: 6px;
+            background: #cbd5e1;
+            border-radius: 3px;
+            outline: none;
+            padding: 0;
+            border: none;
+            cursor: pointer;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            transition: transform 0.15s, background-color 0.15s;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #4338ca;
+        }
+
+        #bannerHeightVal {
+            font-size: 13px;
+            font-weight: 600;
+            color: #4f46e5;
+            width: 55px;
+            padding: 4px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            text-align: center;
+            outline: none;
+            background: #fff;
+            font-family: inherit;
+        }
+
+        #bannerHeightVal:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+        }
+
+        #bannerHeightVal::-webkit-outer-spin-button,
+        #bannerHeightVal::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .page {
+            width: 8.5in;
+            height: 11in;
+            background: white;
+            margin: auto;
+            padding: 0.15in 0.35in 0.35in 0.35in;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .workspace-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 25px;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 20px 50px;
+            box-sizing: border-box;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            height: calc(100vh - 40px);
+            max-height: 11in;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 20px;
+            box-sizing: border-box;
+        }
+
+        .image-pool-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 5px;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 4px;
+            min-height: 120px;
+            max-height: calc(11in - 180px);
+        }
+
+        /* Scrollbar styles for the image pool grid */
+        .image-pool-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        .image-pool-grid::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        .image-pool-grid::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .image-pool-grid::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .image-pool-item {
+            aspect-ratio: 1;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            background: #f8fafc;
+            cursor: grab;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-pool-item:active {
+            cursor: grabbing;
+        }
+
+        .image-pool-item:hover {
+            border-color: #4f46e5;
+            border-style: solid;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+        }
+
+        .image-pool-item img {
+            max-width: 85%;
+            max-height: 85%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        .image-pool-item .remove-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 18px;
+            height: 18px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+            opacity: 0;
+            transition: opacity 0.2s, background-color 0.2s;
+            line-height: 1;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 5;
+        }
+
+        .image-pool-item:hover .remove-btn {
+            opacity: 1;
+        }
+
+        .image-pool-item .remove-btn:hover {
+            background: #dc2626;
+        }
+
+        .banner {
+            position: relative;
+            height: 120px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            overflow: hidden;
+            font-size: 22px;
+            color: #94a3b8;
+            user-select: none;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .banner:hover {
+            border-color: #94a3b8;
+            background-color: #f8fafc;
+        }
+
+        .banner.has-image {
+            border: none;
+            border-radius: 0;
+            background-color: transparent;
+        }
+
+        #bannerContent {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #bannerContent img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            cursor: ns-resize;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            z-index: 10;
+        }
+
+        .resize-handle::after {
+            content: '';
+            width: 40px;
+            height: 4px;
+            background-color: #cbd5e1;
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+
+        .banner:hover .resize-handle::after,
+        .resize-handle:hover::after {
+            opacity: 1;
+        }
+
+        .resize-handle:hover {
+            background-color: rgba(79, 70, 229, 0.08);
+        }
+
+        .resize-handle:hover::after {
+            background-color: #4f46e5;
+        }
+
+        .grid {
+            display: grid;
+            border: 2px solid #000;
+            background-color: #000;
+            gap: 2px;
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            box-sizing: border-box;
+            background: #fff;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cell img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: var(--image-fit);
+            padding: var(--image-padding);
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .placeholder {
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+            margin: auto
+        }
+
+        .lock-box {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 11px;
+            background: white;
+            color: #475569;
+            z-index: 2;
+        }
+
+        .name-line {
+            padding-top: 18px;
+            text-align: center;
+            font-size: 20px
+        }
+
+        @media print {
+            @page {
+                size: 8.5in 11in;
+                margin: 0mm;
+            }
+
+            html,
+            body {
+                background: white;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .controls,
+            .modal-overlay,
+            #exportModal,
+            #editorPage,
+            .sidebar {
+                display: none !important;
+            }
+
+            #printContainer {
+                display: block !important;
+            }
+
+            .page {
+                border: none;
+                margin: 0;
+                width: 8.5in;
+                height: 11in;
+                box-shadow: none;
+                padding: 0.15in 0.35in 0.35in 0.35in;
+                box-sizing: border-box;
+                page-break-after: always;
+                page-break-inside: avoid;
+            }
+
+            .resize-handle {
+                display: none !important;
+            }
+
+            .lock-box {
+                display: none !important;
+            }
+
+            .cell input[type="text"]:placeholder-shown {
+                display: none !important;
+            }
+
+            .cell img,
+            .cell .placeholder {
+                margin: auto !important;
+            }
+        }
+
+        /* Print Container */
+        #printContainer {
+            display: none;
+        }
+
+        /* Styles applied during PNG rendering */
+        body.is-exporting .lock-box,
+        body.is-exporting .sidebar {
+            display: none !important;
+        }
+
+        body.is-exporting .cell input[type="text"]:placeholder-shown {
+            display: none !important;
+        }
+
+        body.is-exporting .cell img,
+        body.is-exporting .cell .placeholder {
+            margin: auto !important;
+        }
+
+        body.is-exporting .resize-handle {
+            display: none !important;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 380px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            border: 1px solid #e2e8f0;
+            box-sizing: border-box;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: color 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #475569;
+        }
+
+        .modal-content h2 {
+            margin: 0 0 20px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: center;
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .input-group input[type="number"] {
+            padding: 10px 12px;
+            font-size: 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        .input-group input[type="number"]:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        .format-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .format-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .radio-options {
+            display: flex;
+            gap: 20px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+        }
+
+        .radio-label input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4f46e5;
+            cursor: pointer;
+        }
+
+        .btn-block {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        /* Progress Bar */
+        .export-progress {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4f46e5, #10b981);
+            transition: width 0.2s ease;
+        }
+
+        #progressText {
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="controls">
+        <label>Grid:</label>
+        <select id="gridSize">
+            <option value="3">3 x 3</option>
+            <option value="4" selected>4 x 4</option>
+            <option value="5">5 x 5</option>
+        </select>
+
+        <button class="btn-primary" onclick="createGrid()">Create Grid</button>
+
+        <button onclick="document.getElementById('bulkUpload').click()">Upload All Images</button>
+        <input type="file" id="bulkUpload" multiple accept="image/*" hidden>
+
+        <button onclick="randomizePictures()">Random Picture</button>
+
+        <label>
+            <input type="checkbox" id="showBanner" checked onchange="toggleBanner()"> Show Banner
+        </label>
+
+        <div class="slider-container" id="bannerHeightControl">
+            <label for="bannerHeightSlider">Banner Height:</label>
+            <input type="range" id="bannerHeightSlider" min="50" max="400" value="120"
+                oninput="updateBannerHeight(this.value, 'slider')">
+            <input type="number" id="bannerHeightVal" min="50" max="400" value="120"
+                oninput="updateBannerHeight(this.value, 'input')">
+            <span style="font-size: 13px; font-weight: 600; color: #475569;">px</span>
+        </div>
+
+        <label>Image Fit:</label>
+        <select id="imageFit" onchange="updateImageStyle()">
+            <option value="cover" selected>Cover (เต็มช่อง)</option>
+            <option value="contain">Contain (พอดีช่อง)</option>
+            <option value="fill">Fill (ยืดรูป)</option>
+        </select>
+
+        <div class="slider-container">
+            <label for="imagePaddingSlider">Image Margin:</label>
+            <input type="range" id="imagePaddingSlider" min="0" max="24" value="0"
+                oninput="updateImageStyle()">
+            <span id="imagePaddingVal" style="font-size: 13px; font-weight: 600; color: #4f46e5; min-width: 25px; text-align: center;">0px</span>
+        </div>
+
+        <label>
+            <input type="checkbox" id="showName" checked onchange="toggleName()"> Show Name
+        </label>
+
+        <button class="btn-danger" onclick="clearAll()">Clear All</button>
+        <button class="btn-success" onclick="openExportModal()">Export</button>
+    </div>
+
+    <div class="workspace-container">
+        <div class="sidebar">
+            <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 16px; font-weight: 700; color: #1e293b;">
+                คลังรูปภาพที่อัปโหลด (<span id="sidebarImageCount">0</span>)
+            </h3>
+            <p style="margin: 0 0 15px 0; font-size: 13px; color: #64748b; line-height: 1.4;">
+                ลากรูปภาพจากคลังมาวางลงในช่องตารางเพื่อจัดวางตำแหน่งรูปภาพ
+            </p>
+            <div class="image-pool-grid" id="sidebarImagePool">
+                <!-- Dynamically populated -->
+            </div>
+            <button class="btn-primary" onclick="document.getElementById('bulkUpload').click()" style="margin-top: 15px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
+                </svg>
+                อัปโหลดรูปภาพเพิ่ม
+            </button>
+        </div>
+
+        <div class="page" id="editorPage">
+            <div class="banner" id="bannerBox">
+                <div id="bannerContent" onclick="document.getElementById('bannerUpload').click()">
+                    Upload Banner
+                </div>
+                <div class="resize-handle" id="bannerResizeHandle"></div>
+            </div>
+
+            <input type="file" id="bannerUpload" accept="image/*" hidden>
+
+            <div class="grid" id="bingoGrid"></div>
+
+            <div class="name-line" id="nameLine">
+                Name : ______________________________
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeExportModal()">&times;</button>
+            <h2>Export Cards</h2>
+
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="exportPagesCount">จำนวนหน้า (Limit 50 page):</label>
+                    <input type="number" id="exportPagesCount" min="1" max="50" value="1">
+                </div>
+
+
+
+                <div id="exportProgress" class="export-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div id="progressBarFill" class="progress-fill"></div>
+                    </div>
+                    <span id="progressText">กำลังสร้างไฟล์...</span>
+                </div>
+
+                <button id="btnStartExport" class="btn-success btn-block" onclick="startExport()">สร้างไฟล์</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="singleUpload" accept="image/*" hidden>
+
+    <script>
+        const grid = document.getElementById("bingoGrid");
+        const singleUpload = document.getElementById("singleUpload");
+        const bulkUpload = document.getElementById("bulkUpload");
+        const bannerUpload = document.getElementById("bannerUpload");
+        const bannerBox = document.getElementById("bannerBox");
+
+        let cells = [];
+        let currentCell = null;
+        let draggedCell = null;
+        let draggedLibraryItem = null;
+        let imagePool = []; // Pool to store all uploaded files
+
+        function addImageToPool(src, text) {
+            if (!imagePool.some(item => item.src === src)) {
+                imagePool.push({ src, text });
+                updateSidebarImagePool();
+            }
+        }
+
+        function getFullImagePool() {
+            const pool = [...imagePool];
+            cells.forEach(cell => {
+                const img = cell.querySelector("img");
+                if (img) {
+                    const src = img.src;
+                    const text = cell.querySelector('input[type="text"]')?.value || "";
+                    if (!pool.some(item => item.src === src)) {
+                        pool.push({ src, text });
+                    }
+                }
+            });
+            return pool;
+        }
+
+        function createGrid() {
+            const size = Number(document.getElementById("gridSize").value);
+            grid.innerHTML = "";
+            cells = [];
+            grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+
+            for (let i = 0; i < size * size; i++) {
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                cell.draggable = true;
+
+                cell.innerHTML = `
+      <label class="lock-box">
+        <input type="checkbox" class="lockCell"> Lock
+      </label>
+      <div class="placeholder">Click to Upload Image</div>
+    `;
+
+                cell.addEventListener("click", e => {
+                    if (e.target.tagName !== "INPUT" && e.target.tagName !== "LABEL") {
+                        currentCell = cell;
+                        singleUpload.click();
+                    }
+                });
+
+                cell.addEventListener("dragstart", () => {
+                    draggedCell = cell;
+                    draggedLibraryItem = null;
+                });
+                cell.addEventListener("dragover", e => e.preventDefault());
+                cell.addEventListener("drop", () => {
+                    if (draggedLibraryItem) {
+                        const locked = cell.querySelector(".lockCell")?.checked || false;
+                        cell.innerHTML = `
+                            <label class="lock-box">
+                                <input type="checkbox" class="lockCell" ${locked ? "checked" : ""}> Lock
+                            </label>
+                            <img src="${draggedLibraryItem.src}">
+                        `;
+                        draggedLibraryItem = null;
+                    } else if (draggedCell) {
+                        swapCells(draggedCell, cell);
+                        draggedCell = null;
+                    }
+                });
+
+                grid.appendChild(cell);
+                cells.push(cell);
+            }
+        }
+
+        function addImageToCell(cell, file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const oldText = cell.querySelector('input[type="text"]')?.value || "";
+                const locked = cell.querySelector(".lockCell")?.checked || false;
+                const textVal = oldText && oldText !== "Text" ? oldText : (file.name.substring(0, file.name.lastIndexOf('.')) || "Text");
+
+                cell.innerHTML = `
+      <label class="lock-box">
+        <input type="checkbox" class="lockCell" ${locked ? "checked" : ""}> Lock
+      </label>
+      <img src="${e.target.result}">
+    `;
+                addImageToPool(e.target.result, textVal);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        singleUpload.addEventListener("change", function () {
+            if (currentCell && this.files[0]) {
+                addImageToCell(currentCell, this.files[0]);
+            }
+            this.value = "";
+        });
+
+        bulkUpload.addEventListener("change", async function () {
+            const files = Array.from(this.files);
+
+            const promises = files.map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const text = file.name.substring(0, file.name.lastIndexOf('.')) || "Text";
+                        resolve({
+                            src: e.target.result,
+                            text: text
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            const results = await Promise.all(promises);
+
+            results.forEach((item, index) => {
+                addImageToPool(item.src, item.text);
+                if (cells[index]) {
+                    const locked = cells[index].querySelector(".lockCell")?.checked || false;
+                    cells[index].innerHTML = `
+                        <label class="lock-box">
+                            <input type="checkbox" class="lockCell" ${locked ? "checked" : ""}> Lock
+                        </label>
+                        <img src="${item.src}">
+                    `;
+                }
+            });
+            this.value = "";
+        });
+
+        bannerUpload.addEventListener("change", function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                const bannerContent = document.getElementById("bannerContent");
+                bannerContent.innerHTML = `<img src="${e.target.result}">`;
+                bannerBox.classList.add("has-image");
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function randomizePictures() {
+            const fullPool = getFullImagePool();
+
+            // Get locked cells
+            const lockedCells = []; // { index, src, text }
+            const unlockedCellIndexes = [];
+
+            cells.forEach((cell, index) => {
+                const lock = cell.querySelector(".lockCell");
+                if (lock && lock.checked) {
+                    const img = cell.querySelector("img");
+                    lockedCells.push({
+                        index: index,
+                        src: img ? img.src : null,
+                        text: cell.querySelector('input[type="text"]')?.value || ""
+                    });
+                } else {
+                    unlockedCellIndexes.push(index);
+                }
+            });
+
+            // Filter out locked images from the pool
+            let availablePool = fullPool.filter(item => {
+                return !lockedCells.some(locked => locked.src === item.src);
+            });
+
+            if (availablePool.length + lockedCells.length < 2) {
+                alert("ต้องมีรูปอย่างน้อย 2 รูปก่อน Random");
+                return;
+            }
+
+            // Shuffle the available pool
+            for (let i = availablePool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [availablePool[i], availablePool[j]] = [availablePool[j], availablePool[i]];
+            }
+
+            // Populate unlocked cells from the shuffled available pool
+            unlockedCellIndexes.forEach((cellIdx, index) => {
+                const cell = cells[cellIdx];
+                const item = availablePool[index];
+
+                if (item) {
+                    cell.innerHTML = `
+                        <label class="lock-box">
+                            <input type="checkbox" class="lockCell"> Lock
+                        </label>
+                        <img src="${item.src}">
+                    `;
+                } else {
+                    cell.innerHTML = `
+                        <label class="lock-box">
+                            <input type="checkbox" class="lockCell"> Lock
+                        </label>
+                        <div class="placeholder">Empty</div>
+                    `;
+                }
+            });
+        }
+
+        function swapCells(cell1, cell2) {
+            if (!cell1 || !cell2 || cell1 === cell2) return;
+            const temp = cell1.innerHTML;
+            cell1.innerHTML = cell2.innerHTML;
+            cell2.innerHTML = temp;
+        }
+
+        function updateBannerHeight(val, source) {
+            let num = Number(val);
+            if (isNaN(num)) return;
+
+            let constrained = num;
+            if (constrained < 50) constrained = 50;
+            if (constrained > 400) constrained = 400;
+
+            bannerBox.style.height = constrained + "px";
+            document.getElementById("bannerHeightSlider").value = constrained;
+
+            const numInput = document.getElementById("bannerHeightVal");
+            if (numInput && source !== 'input') {
+                numInput.value = constrained;
+            }
+        }
+
+        // Add validation on blur to ensure value stays within 50-400 bounds
+        document.getElementById("bannerHeightVal").addEventListener("blur", function () {
+            let val = Number(this.value);
+            if (isNaN(val) || val < 50) val = 50;
+            if (val > 400) val = 400;
+            this.value = val;
+            updateBannerHeight(val);
+        });
+
+        function toggleBanner() {
+            const showBanner = document.getElementById("showBanner").checked;
+            bannerBox.style.display = showBanner ? "flex" : "none";
+            document.getElementById("bannerHeightControl").style.display = showBanner ? "flex" : "none";
+        }
+
+        function toggleName() {
+            document.getElementById("nameLine").style.display =
+                document.getElementById("showName").checked ? "block" : "none";
+        }
+
+        function updateImageStyle() {
+            const fit = document.getElementById("imageFit").value;
+            const padding = document.getElementById("imagePaddingSlider").value + "px";
+
+            document.documentElement.style.setProperty('--image-fit', fit);
+            document.documentElement.style.setProperty('--image-padding', padding);
+
+            const paddingValEl = document.getElementById("imagePaddingVal");
+            if (paddingValEl) {
+                paddingValEl.textContent = padding;
+            }
+        }
+
+        function updateSidebarImagePool() {
+            const container = document.getElementById("sidebarImagePool");
+            if (!container) return;
+
+            container.innerHTML = "";
+
+            imagePool.forEach((item, index) => {
+                const div = document.createElement("div");
+                div.className = "image-pool-item";
+                div.draggable = true;
+                div.title = item.text;
+
+                div.innerHTML = `
+                    <img src="${item.src}" alt="${item.text}">
+                    <button class="remove-btn" onclick="removeImageFromPool(${index}, event)">&times;</button>
+                `;
+
+                div.addEventListener("dragstart", () => {
+                    draggedLibraryItem = item;
+                    draggedCell = null;
+                });
+
+                container.appendChild(div);
+            });
+
+            const counter = document.getElementById("sidebarImageCount");
+            if (counter) {
+                counter.textContent = imagePool.length;
+            }
+        }
+
+        function removeImageFromPool(index, event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            imagePool.splice(index, 1);
+            updateSidebarImagePool();
+        }
+
+        function clearAll() {
+            const bannerContent = document.getElementById("bannerContent");
+            bannerContent.innerHTML = "Upload Banner";
+            bannerBox.classList.remove("has-image");
+
+            // Reset height to default
+            updateBannerHeight(120);
+
+            // Reset image fit and padding to default
+            const fitSelect = document.getElementById("imageFit");
+            if (fitSelect) fitSelect.value = "cover";
+            const paddingSlider = document.getElementById("imagePaddingSlider");
+            if (paddingSlider) paddingSlider.value = "0";
+            updateImageStyle();
+
+            // Clear image pool
+            imagePool = [];
+            updateSidebarImagePool();
+
+            createGrid();
+        }
+
+        // Setup resize dragging behavior
+        const resizeHandle = document.getElementById("bannerResizeHandle");
+        let isResizing = false;
+        let startY, startHeight;
+
+        resizeHandle.addEventListener("mousedown", e => {
+            e.preventDefault();
+            e.stopPropagation();
+            isResizing = true;
+            startY = e.clientY;
+            startHeight = bannerBox.offsetHeight;
+            document.body.style.cursor = 'ns-resize';
+            document.body.style.userSelect = 'none';
+        });
+
+        window.addEventListener("mousemove", e => {
+            if (!isResizing) return;
+            const diffY = e.clientY - startY;
+            let newHeight = startHeight + diffY;
+
+            if (newHeight < 50) newHeight = 50;
+            if (newHeight > 400) newHeight = 400;
+
+            updateBannerHeight(newHeight);
+        });
+
+        window.addEventListener("mouseup", () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+
+        // Touch event support for mobile devices
+        resizeHandle.addEventListener("touchstart", e => {
+            e.preventDefault();
+            e.stopPropagation();
+            isResizing = true;
+            startY = e.touches[0].clientY;
+            startHeight = bannerBox.offsetHeight;
+        });
+
+        window.addEventListener("touchmove", e => {
+            if (!isResizing) return;
+            const diffY = e.touches[0].clientY - startY;
+            let newHeight = startHeight + diffY;
+
+            if (newHeight < 50) newHeight = 50;
+            if (newHeight > 400) newHeight = 400;
+
+            updateBannerHeight(newHeight);
+        });
+
+        window.addEventListener("touchend", () => {
+            isResizing = false;
+        });
+
+        // Export Modal Handlers
+        function openExportModal() {
+            document.getElementById("exportModal").classList.add("active");
+            // Set input defaults
+            document.getElementById("exportPagesCount").value = 1;
+        }
+
+        function closeExportModal() {
+            document.getElementById("exportModal").classList.remove("active");
+            document.getElementById("exportProgress").style.display = "none";
+            document.getElementById("progressBarFill").style.width = "0%";
+            document.getElementById("btnStartExport").disabled = false;
+            document.getElementById("btnStartExport").textContent = "สร้างไฟล์";
+
+            // Clean up temporary containers if any
+            const printContainer = document.getElementById("printContainer");
+            if (printContainer) printContainer.innerHTML = "";
+        }
+
+        async function startExport() {
+            const countInput = document.getElementById("exportPagesCount");
+            let count = Number(countInput.value);
+            if (isNaN(count) || count < 1) count = 1;
+            if (count > 50) count = 50;
+
+            const btn = document.getElementById("btnStartExport");
+            const progressContainer = document.getElementById("exportProgress");
+            const progressFill = document.getElementById("progressBarFill");
+            const progressText = document.getElementById("progressText");
+
+            // Disable button and show progress
+            btn.disabled = true;
+            btn.textContent = "กำลังดำเนินการ...";
+            progressContainer.style.display = "flex";
+            progressFill.style.width = "0%";
+            progressText.textContent = "กำลังเตรียมหน้ากระดาษ...";
+
+            // Create temporary container for cloned pages
+            let printContainer = document.getElementById("printContainer");
+            if (!printContainer) {
+                printContainer = document.createElement("div");
+                printContainer.id = "printContainer";
+                document.body.appendChild(printContainer);
+            }
+            printContainer.innerHTML = "";
+
+            // Gather current editor settings
+            const showBanner = document.getElementById("showBanner").checked;
+            const bannerHeight = document.getElementById("bannerBox").style.height || "120px";
+            const bannerImg = document.querySelector("#bannerContent img");
+            const bannerImgSrc = bannerImg ? bannerImg.src : null;
+            const hasImageClass = document.getElementById("bannerBox").classList.contains("has-image");
+
+            const showName = document.getElementById("showName").checked;
+            const size = Number(document.getElementById("gridSize").value);
+
+            // Extract cells data from main editor grid
+            const currentCells = Array.from(document.querySelectorAll("#bingoGrid .cell"));
+            const cellsData = currentCells.map(cell => {
+                const img = cell.querySelector("img");
+                const text = cell.querySelector('input[type="text"]')?.value || "";
+                const locked = cell.querySelector(".lockCell")?.checked || false;
+                return {
+                    src: img ? img.src : null,
+                    text: text,
+                    locked: locked
+                };
+            });
+
+            // Generate N randomized pages
+            const fullPool = getFullImagePool();
+
+            for (let pageIdx = 1; pageIdx <= count; pageIdx++) {
+                // Update progress
+                let percent = Math.round((pageIdx / count) * 40);
+                progressFill.style.width = percent + "%";
+                progressText.textContent = `กำลังสร้างการ์ดใบที่ ${pageIdx}/${count}...`;
+                await new Promise(r => setTimeout(r, 20)); // Yield thread for animation
+
+                // Clone page layout
+                const pageClone = document.createElement("div");
+                pageClone.className = "page";
+
+                // Cloned banner
+                if (showBanner) {
+                    const bannerClone = document.createElement("div");
+                    bannerClone.className = `banner ${hasImageClass ? "has-image" : ""}`;
+                    bannerClone.style.height = bannerHeight;
+
+                    const bannerContentClone = document.createElement("div");
+                    bannerContentClone.id = "bannerContent";
+                    if (bannerImgSrc) {
+                        bannerContentClone.innerHTML = `<img src="${bannerImgSrc}">`;
+                    } else {
+                        bannerContentClone.textContent = "Upload Banner";
+                    }
+                    bannerClone.appendChild(bannerContentClone);
+                    pageClone.appendChild(bannerClone);
+                }
+
+                // Cloned grid
+                const gridClone = document.createElement("div");
+                gridClone.className = "grid";
+                gridClone.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+
+                // Prepare cell content shuffling for this cloned page
+                const lockedCells = []; // { index, src, text }
+                const unlockedCellIndexes = [];
+
+                cellsData.forEach((cell, idx) => {
+                    if (cell.locked) {
+                        lockedCells.push({ index: idx, src: cell.src, text: cell.text });
+                    } else {
+                        unlockedCellIndexes.push(idx);
+                    }
+                });
+
+                // Filter out locked images from the pool to avoid duplicate placement
+                let availablePool = fullPool.filter(item => {
+                    return !lockedCells.some(locked => locked.src === item.src);
+                });
+
+                // Shuffle the available pool for this page specifically
+                for (let i = availablePool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [availablePool[i], availablePool[j]] = [availablePool[j], availablePool[i]];
+                }
+
+                // Construct cells for cloned grid
+                let availableIdx = 0;
+                for (let idx = 0; idx < cellsData.length; idx++) {
+                    const cellEl = document.createElement("div");
+                    cellEl.className = "cell";
+
+                    const lockedCell = lockedCells.find(p => p.index === idx);
+                    if (lockedCell) {
+                        cellEl.innerHTML = `
+                            <label class="lock-box">
+                                <input type="checkbox" class="lockCell" checked> Lock
+                            </label>
+                            <img src="${lockedCell.src}">
+                        `;
+                    } else {
+                        const item = availablePool[availableIdx++];
+                        if (item) {
+                            cellEl.innerHTML = `
+                                <label class="lock-box">
+                                    <input type="checkbox" class="lockCell"> Lock
+                                </label>
+                                <img src="${item.src}">
+                            `;
+                        } else {
+                            cellEl.innerHTML = `
+                                <label class="lock-box">
+                                    <input type="checkbox" class="lockCell"> Lock
+                                </label>
+                                <div class="placeholder">Empty</div>
+                            `;
+                        }
+                    }
+                    gridClone.appendChild(cellEl);
+                }
+                pageClone.appendChild(gridClone);
+
+                // Cloned name line
+                if (showName) {
+                    const nameLineClone = document.createElement("div");
+                    nameLineClone.className = "name-line";
+                    nameLineClone.innerHTML = "Name : ______________________________";
+                    pageClone.appendChild(nameLineClone);
+                }
+
+                printContainer.appendChild(pageClone);
+            }
+
+            // PNG Export (Since PDF is removed, this is the only option)
+            document.body.classList.add("is-exporting");
+
+            // Position print container temporarily off-screen so html2canvas can capture it
+            printContainer.style.position = "fixed";
+            printContainer.style.top = "0";
+            printContainer.style.left = "-99999px";
+            printContainer.style.display = "block";
+
+            const pages = printContainer.children;
+            for (let i = 0; i < pages.length; i++) {
+                let pageIdx = i + 1;
+                let percent = 40 + Math.round((pageIdx / count) * 60);
+                progressFill.style.width = percent + "%";
+                progressText.textContent = `กำลังดาวน์โหลดรูปภาพใบที่ ${pageIdx}/${count}...`;
+
+                const page = pages[i];
+                try {
+                    const canvas = await html2canvas(page, {
+                        scale: 2, // High resolution for quality printing
+                        useCORS: true,
+                        logging: false
+                    });
+                    const link = document.createElement("a");
+                    link.download = `bingo-card-page-${pageIdx}.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                    
+                    if (pages.length > 1) {
+                        await new Promise(r => setTimeout(r, 300));
+                    }
+                } catch (err) {
+                    console.error("Failed to render page to PNG:", err);
+                }
+            }
+
+            document.body.classList.remove("is-exporting");
+            printContainer.style.display = "none";
+            closeExportModal();
+        }
+
+        createGrid();
+        updateImageStyle();
+    </script>
+
+</body>
+
+</html>
